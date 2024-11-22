@@ -1,0 +1,29 @@
+image: gradle:8.0-jdk8
+
+stages:
+  - build
+  - deploy
+
+variables:
+  PROJECT_ID: your-gcp-project-id
+  DOCKER_IMAGE: gcr.io/$PROJECT_ID/demo
+
+before_script:
+  - echo $GCLOUD_SERVICE_KEY | base64 --decode -i > ${CI_PROJECT_DIR}/gcloud-service-key.json
+  - gcloud auth activate-service-account --key-file ${CI_PROJECT_DIR}/gcloud-service-key.json
+  - gcloud auth configure-docker
+  - gcloud config set project $PROJECT_ID
+
+build:
+  stage: build
+  script:
+    - gradle build
+    - docker build -t $DOCKER_IMAGE:$CI_COMMIT_SHA .
+    - docker push $DOCKER_IMAGE:$CI_COMMIT_SHA
+
+deploy:
+  stage: deploy
+  script:
+    - gcloud container clusters get-credentials your-gke-cluster --zone your-gke-cluster-zone
+    - kubectl apply -f k8s/deployment.yaml
+    - kubectl apply -f k8s/service.yaml

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syp-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: syp
+  template:
+    metadata:
+      labels:
+        app: syp
+    spec:
+      containers:
+        - name: syp
+          image: gcr.io/your-gcp-project-id/syp:latest
+          ports:
+            - containerPort: 8080
